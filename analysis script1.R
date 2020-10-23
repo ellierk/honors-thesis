@@ -2,6 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(quantreg)
+library(quantreg)
 
 squid.rawdata = read.csv("kremer consump assay data.csv", header = TRUE)
 summary(squid.rawdata)
