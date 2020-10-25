@@ -30,18 +30,26 @@ site.avgbydist %>%
 plot(density(logit(squid$consump)))
 
 #without outliers
-plot(density((squid %>% filter(consump < .7))$consump))
+Q <- quantile(squid$consump, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(squid$consump)
+up <-  Q[2]+1.5*iqr # Upper Range  
+low<- Q[1]-1.5*iqr # Lower Range
+squidElim<- subset(squid,
+                   squid$consump > (Q[1] - 1.5*iqr) & squid$consump < (Q[2]+1.5*iqr))
+plot(density(squidElim$consump))
 
 #linreg 
-consumpByDist <- lm(consump ~ dist_from_bags, data = squid)
+consumpByDist <- lm(consump ~ dist_from_bags, data = squidElim)
 AIC(consumpByDist)
 plot(resid(consumpByDist))
 
 # quantile regression attempts
-plot(squid$dist_from_bags, squid$consump)
+plot(squidElim$dist_from_bags, squidElim$consump)
 taus <- c(.05,.1,.25,.75,.90,.95)
-fit1 <- rq(consump ~ dist_from_bags, tau = .5, data = squid)
+fit1 <- rq(consump ~ dist_from_bags, tau = .5, data = squidElim)
 abline(fit1)
 for(i in 1:length(taus)) {
-  abline(rq(consump ~ dist_from_bags, tau = taus[i], data = squid))
+  abline(rq(consump ~ dist_from_bags, tau = taus[i], data = squidElim))
 }
+
+# glm model here
