@@ -15,7 +15,7 @@ squid %>%
   geom_point() 
 
 
-boxplot(squid$consump)
+boxplot(squid$consump, ylab="% Consumption")
 boxplot((squid%>% filter(site == "mera"))$consump)
 boxplot((squid%>% filter(site == "styron"))$consump)
 
@@ -41,35 +41,55 @@ squidElim<- subset(squid,
 plot(density(squidElim$consump))
 
 # avg point without outliers
-squid.sd = squidElim %>% 
+squid.sd = squid %>% 
   group_by(site, dist_from_bags)%>% 
   summarise(mean(consump), sd(consump)) %>% 
   rename(avg_consump = 'mean(consump)', std_dev = 'sd(consump)') 
-  
+
+squid.sd.NoOut = squidElim %>% 
+  group_by(site, dist_from_bags)%>% 
+  summarise(mean(consump), sd(consump)) %>% 
+  rename(avg_consump = 'mean(consump)', std_dev = 'sd(consump)') 
+
 squid.sd %>% ggplot(aes(x = dist_from_bags, y = avg_consump, color = site)) + 
   geom_point()
 
 # barplot
-squid.sd %>%
+squid.sd %>% ggplot(aes(x = dist_from_bags, y = avg_consump, fill = site)) + 
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_errorbar(aes(ymin = avg_consump, ymax = avg_consump+std_dev), width=.2, position=position_dodge(2)) +
+  xlab("Distance from bags (m)") + ylab("Average % Consumption") +
+  labs(title = "% Consumption of Squidpops")
+
+squid.sd.NoOut %>%
   ggplot(aes(x = dist_from_bags, y = avg_consump, fill = site)) + 
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = avg_consump, ymax = avg_consump+std_dev), width=.2,
                 position=position_dodge(2)) +
   xlab("Distance from bags (m)") + ylab("Average % Consumption") +
-  labs(title = "Average % Consumption of Squidpops by Lease and Treatment", )
+  labs(title = "% Consumption of Squidpops: Outliers removed")
+
+# dot plot with outliers
+ggplot(data = squid, aes(x=dist_from_bags, y = consump, col = site)) +
+  geom_point() + xlab("Distance from bags (m)") + ylab("% Consumption") + 
+  labs(title = "% Consumption by Distance")
 
 # dot plot without outliers
 ggplot(data = squidElim, aes(x=dist_from_bags, y = consump, col = site)) +
   geom_point() + xlab("Distance from bags (m)") + ylab("% Consumption") + 
-  labs(title = "% Consumption by Distance")
+  labs(title = "% Consumption by Distance: Outliers removed")
 #+ geom_smooth(method = "lm", formula = y ~ x)
 
 # quantile regression 
+ggplot(data = squid, aes(x=dist_from_bags, y = consump)) +
+  geom_point() +geom_quantile(quantiles = c(.1, .25, .5, .75, .95)) +
+  xlab("Distance from bags (m)") + ylab("% Consumption") + 
+  labs(title = "% Consumption by Distance")
 
 ggplot(data = squidElim, aes(x=dist_from_bags, y = consump)) +
   geom_point() +geom_quantile(quantiles = c(.1, .25, .5, .75, .95)) +
   xlab("Distance from bags (m)") + ylab("% Consumption") + 
-  labs(title = "% Consumption by Distance")
+  labs(title = "% Consumption by Distance: Outliers Removed")
 
 
 #linreg 
@@ -79,10 +99,14 @@ plot(resid(consumpByDist))
 
 # glm model here
 
-consumpMulti <- glm(consump ~ dist_from_bags + site +
+consumpMultiGaus <- glm(consump ~ dist_from_bags + site +
                       temp_avg + sal_avg + 
-                      spacing_m + soak_start, family = binomial,
+                      spacing_m + soak_start, family = gaussian,
                     data = squidElim)
+consumpMultiBinom <- glm(consump ~ dist_from_bags + site +
+                           temp_avg + sal_avg + 
+                           spacing_m + soak_start, family = binomial,
+                         data = squidElim)
 summary(consumpMulti)
 
 # glmer
