@@ -1,0 +1,113 @@
+---
+title: "Consumption Assay"
+author: "Ellie Kremer"
+date: "11/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(quantreg)
+library(lme4)
+library(car)
+```
+
+```{r}
+squid.rawdata = read.csv("kremer consump assay data.csv", header = TRUE)
+summary(squid.rawdata)
+
+# removing trial tests and logit transforming consump data
+squid = squid.rawdata %>% slice(6:65) %>% mutate(consump.log = logit(consump, adjust = .001))
+```
+
+```{r}
+squid %>% 
+  ggplot(aes(x = dist_from_bags, y = consump, color = site)) + 
+  geom_point() 
+
+```
+
+```{r}
+boxplot(squid$consump)
+boxplot((squid%>% filter(site == "mera"))$consump)
+boxplot((squid%>% filter(site == "styron"))$consump)
+
+boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid)
+boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid %>% filter(site == "styron"))
+boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid %>% filter(site == "mera"))
+
+```
+
+```{r}
+site.avgbydist = squid %>% 
+    group_by(site, dist_from_bags)%>% 
+    summarise(mean(consump.log)) %>% rename(avg_consump = 'mean(consump.log)')
+site.avgbydist %>% 
+  ggplot(aes(x = dist_from_bags, y = avg_consump, color = site)) + 
+  geom_point()
+```
+
+```{r}
+# with outliers
+plot(density(squid$consump.log))
+
+```
+
+```{r}
+#without outliers
+Q <- quantile(squid$consump, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(squid$consump)
+up <-  Q[2]+1.5*iqr # Upper Range  
+low<- Q[1]-1.5*iqr # Lower Range
+squidElim<- subset(squid,
+                   squid$consump > (Q[1] - 1.5*iqr) & squid$consump < (Q[2]+1.5*iqr))
+plot(density(squidElim$consump))
+
+```
+
+```{r}
+#linreg 
+consumpByDist <- lm(consump ~ dist_from_bags, data = squidElim)
+AIC(consumpByDist)
+plot(resid(consumpByDist))
+
+anova(consumpByDist)
+```
+
+```{r}
+# quantile regression attempts
+plot(squidElim$dist_from_bags, squidElim$consump)
+taus <- c(.05,.1,.25,.75,.90,.95)
+fit1 <- rq(consump ~ dist_from_bags, tau = .5, data = squidElim)
+abline(fit1)
+for(i in 1:length(taus)) {
+  abline(rq(consump ~ dist_from_bags, tau = taus[i], data = squidElim))
+}
+
+```
+
+```{r}
+
+```
+
