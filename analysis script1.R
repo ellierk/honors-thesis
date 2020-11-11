@@ -2,7 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(quantreg)
-library(quantreg)
+library(lme4)
 
 squid.rawdata = read.csv("kremer consump assay data.csv", header = TRUE)
 summary(squid.rawdata)
@@ -43,6 +43,8 @@ consumpByDist <- lm(consump ~ dist_from_bags, data = squidElim)
 AIC(consumpByDist)
 plot(resid(consumpByDist))
 
+anova(consumpByDist)
+
 # quantile regression attempts
 plot(squidElim$dist_from_bags, squidElim$consump)
 taus <- c(.05,.1,.25,.75,.90,.95)
@@ -51,5 +53,6 @@ abline(fit1)
 for(i in 1:length(taus)) {
   abline(rq(consump ~ dist_from_bags, tau = taus[i], data = squidElim))
 }
+
 
 # glm model here
