@@ -49,11 +49,11 @@ squid %>%
 ```
 
 ```{r}
-boxplot(squid$consump)
+boxplot(squid$consump, ylab = "Consumption", main = "Distribution of Consumption")
 boxplot((squid%>% filter(site == "mera"))$consump)
 boxplot((squid%>% filter(site == "styron"))$consump)
 
-boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid)
+boxplot(consump ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", main = "Distribution of Consumption by Distance", data = squid)
 boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid %>% filter(site == "styron"))
 boxplot(consump.log ~ dist_from_bags, xlab = "Distance from Bags (m)", ylab = "Consumption", data = squid %>% filter(site == "mera"))
 
