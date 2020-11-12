@@ -19,9 +19,6 @@ When you click the **Knit** button a document will be generated that includes bo
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
@@ -39,6 +36,8 @@ summary(squid.rawdata)
 
 # removing trial tests and logit transforming consump data
 squid = squid.rawdata %>% slice(6:65) %>% mutate(consump.log = logit(consump, adjust = .001))
+squid$site = as.factor(squid$site)
+squid$consump = squid$consump + .0001
 ```
 
 ```{r}
@@ -70,8 +69,8 @@ site.avgbydist %>%
 
 ```{r}
 # with outliers
-plot(density(squid$consump.log))
-
+hist(squid$consump)
+hist(squid$consump.log)
 ```
 
 ```{r}
@@ -82,13 +81,14 @@ up <-  Q[2]+1.5*iqr # Upper Range
 low<- Q[1]-1.5*iqr # Lower Range
 squidElim<- subset(squid,
                    squid$consump > (Q[1] - 1.5*iqr) & squid$consump < (Q[2]+1.5*iqr))
-plot(density(squidElim$consump))
+hist(squidElim$consump)
+hist(squidElim$consump.log)
 
 ```
 
 ```{r}
 #linreg 
-consumpByDist <- lm(consump ~ dist_from_bags, data = squidElim)
+consumpByDist <- lm(consump.log ~ dist_from_bags, data = squidElim)
 AIC(consumpByDist)
 plot(resid(consumpByDist))
 
@@ -97,15 +97,27 @@ anova(consumpByDist)
 
 ```{r}
 # quantile regression attempts
-plot(squidElim$dist_from_bags, squidElim$consump)
+plot(squidElim$dist_from_bags, squidElim$consump.log)
 taus <- c(.05,.1,.25,.75,.90,.95)
-fit1 <- rq(consump ~ dist_from_bags, tau = .5, data = squidElim)
+fit1 <- rq(consump.log ~ dist_from_bags, tau = .5, data = squidElim)
 abline(fit1)
 for(i in 1:length(taus)) {
-  abline(rq(consump ~ dist_from_bags, tau = taus[i], data = squidElim))
+  abline(rq(consump.log ~ dist_from_bags, tau = taus[i], data = squidElim))
 }
 
 ```
+
+```{r}
+# glm
+# temp_avg + sal_avg + high_tide + dist_from_bags + spacing_m + temp_avg + sal_avg
+consump.mod = glm(consump ~ spacing_m, family = "binomial", data = squidElim)
+anova(consump.mod)
+AIC(consump.mod)
+summary(consump.mod)
+drop1(consump.mod)
+
+```
+
 
 ```{r}
 
