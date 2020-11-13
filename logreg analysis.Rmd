@@ -1,0 +1,66 @@
+---
+title: "logreg analysis"
+author: "Ellie Kremer"
+date: "11/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
+library(dplyr)
+library(ggplot2)
+library(quantreg)
+library(lme4)
+```
+
+```{r}
+lr.squid = read.csv("logreg.csv", header = TRUE)
+lr.squid$site = factor(lr.squid$site)
+summary(lr.squid)
+
+```
+```{r}
+logitDist = glm(consumed ~ dist_from_bags, family = "binomial", data = lr.squid)
+summary(logitDist)
+```
+
+```{r}
+xdist <- seq(0, 40, 0.01)
+ydist <- predict(logitDist, list(dist_from_bags = xdist),type="response")
+newdata = data.frame(xdist = xdist, ydist = ydist)
+```
+
+
+```{r}
+lr.squid %>% 
+  ggplot(aes(x = dist_from_bags, y = consumed, color = site)) + 
+  geom_point() 
+```
+
+```{r}
+plot(x = lr.squid$dist_from_bags, y = lr.squid$consumed, pch = 16,
+     xlab = "Distance from bags (m)", ylab = "% Consumed", main = "Modeling Consumption over Distance")
+lines(xdist, ydist)
+
+```
+```{r}
+ggplot(newdata, aes(x = xdist, y = ydist)) + geom_point() + xlab("Distance from bags (m)") + ylab("% Consumed") + labs(title = "Logistic regression of Consumption over Distance")
+
+```
+
+```{r}
+logitSquid = glm(consumed ~ dist_from_bags + spacing_m + temp_avg + site, family = "binomial", data = lr.squid)
+summary(logitSquid)
+drop1(logitSquid)
+Anova(logitSquid)
+
+```
+
