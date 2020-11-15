@@ -103,7 +103,7 @@ anova(consumpByDist)
 
 ```{r}
 # quantile regression attempts
-plot(squidElim$dist_from_bags, squidElim$consump, xlab = "Distance from Bags (m)", ylab = "% Consumption", main = "Quantile regression of Consumption")
+plot(squidElim$dist_from_bags, squidElim$consump, xlab = "Distance from Bags (m)", ylab = "% Consumption")
 taus <- c(.05,.1,.25,.75,.90,.95)
 fit1 <- rq(consump ~ dist_from_bags, tau = .5, data = squidElim)
 abline(fit1)

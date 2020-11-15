@@ -22,11 +22,27 @@ library(lme4)
 ```
 
 ```{r}
+squid.rawdata = read.csv("kremer consump assay data.csv", header = TRUE)
+squid = squid.rawdata %>% slice(6:65) %>% mutate(con.arcsin = asin(sqrt(consump)))
+squid$site = as.factor(squid$site)
+
 lr.squid = read.csv("logreg.csv", header = TRUE)
 lr.squid$site = factor(lr.squid$site)
 summary(lr.squid)
 
 ```
+
+```{r}
+site.avgbydist = squid %>% 
+    group_by(site, dist_from_bags)%>% 
+    summarise(mean(con.arcsin)) %>% rename(avg_consump = 'mean(con.arcsin)')
+site.avgbydist %>% 
+  ggplot(aes(x = dist_from_bags, y = avg_consump, color = site)) + 
+  geom_point()
+plot(site.avgbydist$dist_from_bags, site.avgbydist$avg_consump, xlab= "Distance from bags (m)", ylab="% Consumed", pch = 19, col = site.avgbydist$site)
+```
+
+
 ```{r}
 logitDist = glm(consumed ~ dist_from_bags, family = "binomial", data = lr.squid)
 summary(logitDist)
@@ -36,6 +52,8 @@ summary(logitDist)
 xdist <- seq(0, 40, 0.01)
 ydist <- predict(logitDist, list(dist_from_bags = xdist),type="response")
 newdata = data.frame(xdist = xdist, ydist = ydist)
+
+write.csv(newdata, "logregdata.csv")
 ```
 
 
