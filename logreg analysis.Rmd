@@ -19,6 +19,7 @@ library(dplyr)
 library(ggplot2)
 library(quantreg)
 library(lme4)
+library(car)
 ```
 
 ```{r}
@@ -30,6 +31,8 @@ summary(lr.squid)
 ```{r}
 logitDist = glm(consumed ~ dist_from_bags, family = "binomial", data = lr.squid)
 summary(logitDist)
+Anova(logitDist)
+aov(logitDist)
 ```
 
 ```{r}
